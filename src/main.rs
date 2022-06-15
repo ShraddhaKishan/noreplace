@@ -1,4 +1,5 @@
 #![allow(unused_imports)]
+#![allow(warnings)]
 
 use itertools::Itertools;
 use std::{
@@ -8,7 +9,7 @@ use std::{
 };
 
 use deltalake::{
-    action::{Action, Add, Remove, Stats},
+    action::{Action, Add, DeltaOperation, Remove, SaveMode, Stats, OutputMode},
     writer::{DeltaWriter, RecordBatchWriter},
     DeltaTableError, SchemaTypeStruct, StorageError, UriError,
 };
@@ -144,16 +145,24 @@ pub async fn add_row(table_path: &str, service_area: Value, config: Value) {
     let arrow_schema_ref = Arc::new(conv_to_arrow_schema(&metadata.schema).unwrap());
     let mut writer = RecordBatchWriter::for_table(&delta_table, HashMap::new()).unwrap();
 
-    let actions = delta_table
-        .get_files()
-        .into_iter()
-        .map(|file| Action::remove(create_remove(file.to_owned())))
-        .collect::<Vec<Action>>();
+    // let actions = delta_table
+    //     .get_files()
+    //     .into_iter()
+    //     .map(|file| Action::remove(create_remove(file.to_owned())))
+    //     .collect::<Vec<Action>>();
 
     let mut transaction = delta_table.create_transaction(None);
 
-    transaction.add_actions(actions);
-    transaction.commit(None, None).await.unwrap();
+    // let operation = DeltaOperation::Write {
+    //     mode: SaveMode::Append,
+    //     partition_by: None,
+    //     predicate: None,
+    // };
+
+    // let operation = DeltaOperation::StreamingUpdate { output_mode: OutputMode::Update, query_id: (), epoch_id: () }
+
+    // transaction.add_actions(actions);
+    // transaction.commit(Some(operation), None).await.unwrap();
 
     let rows = get_all_rows(table_path).await;
     let mut flag = false;
@@ -288,8 +297,9 @@ async fn main() {
 
     let config: Value = serde_json::from_str(data).unwrap();
 
-    const SERVICE_AREA_PATH: &str =
-        "/mnt/wiise-etl/datalake/integrationarchive/integrationarchiveglobal/servicearea";
+    // const SERVICE_AREA_PATH: &str =
+    //     "/mnt/wiise-etl/datalake/integrationarchive/integrationarchiveglobal/servicearea";
+    const SERVICE_AREA_PATH: &str = "/home/bytebaker/.mnt/minio/servicearea_test";
 
     let service_area = json!("3002");
 
